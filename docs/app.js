@@ -137,6 +137,7 @@ function render() {
   renderEvents(now);
   renderDays(info);
   renderMeta(data);
+  renderFreshness();
 }
 
 function renderWarnings(warnings) {
@@ -338,6 +339,20 @@ function renderMeta(data) {
     el('a', { href: 'https://www.swpc.noaa.gov/', target: '_blank', rel: 'noopener', text: 'NOAA SWPC' }));
 }
 
+// How long ago the GitHub Action last updated the gist (it runs every 30 min).
+function renderFreshness() {
+  const f = $('freshness');
+  const fetched = state.data && state.data.fetchedAt ? new Date(state.data.fetchedAt) : null;
+  if (!fetched || isNaN(fetched)) { f.hidden = true; return; }
+  const mins = Math.max(0, Math.round((Date.now() - fetched) / 6e4));
+  const ago = mins < 1 ? 'just now' : mins < 60 ? `${mins} min ago`
+    : mins < 48 * 60 ? `${Math.floor(mins / 60)}h ${mins % 60}m ago` : `${Math.round(mins / 1440)} days ago`;
+  f.className = `freshness${mins > STALE_MINUTES ? ' f-red' : mins > 45 ? ' f-amber' : ''}`;
+  f.textContent = `Updated ${ago}${mins > STALE_MINUTES ? ', check the Action' : ''}`;
+  f.title = `Scraper last ran ${fmtWhen(fetched)}`;
+  f.hidden = false;
+}
+
 function setStatus(msg) { $('status').textContent = msg || ''; $('status').hidden = !msg; }
 
 // ---------- Live tick (countdown, sky, midnight rollover) ----------
@@ -348,7 +363,7 @@ function tick() {
   if (localDateKey(now) !== state.dayKey) { render(); return; }
   const info = todayInfo(now);
   renderSun(now, info);
-  if (++tickCount % 60 === 0) { renderSky(now, info); renderHero(state.data, info, now); renderMoon(now); }
+  if (++tickCount % 60 === 0) { renderSky(now, info); renderHero(state.data, info, now); renderMoon(now); renderFreshness(); }
 }
 
 // ---------- Data ----------
