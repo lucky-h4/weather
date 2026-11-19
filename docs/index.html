@@ -1,0 +1,81 @@
+<!doctype html>
+<html lang="en-GB">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+  <title>IOM Weather</title>
+  <meta name="description" content="Today's Isle of Man weather from the Ronaldsway Met Office.">
+  <meta name="theme-color" content="#1b4f8f">
+  <link rel="manifest" href="manifest.webmanifest">
+  <link rel="icon" href="icons/icon.svg" type="image/svg+xml">
+  <link rel="apple-touch-icon" href="icons/icon-192.png">
+  <link rel="stylesheet" href="styles.css">
+  <script src="app.js" defer></script>
+</head>
+<body>
+  <header class="top">
+    <div>
+      <h1>Isle of Man</h1>
+      <p id="today-date" class="muted"></p>
+    </div>
+    <div class="top-actions">
+      <button id="refresh" class="icon-btn" aria-label="Refresh">⟳</button>
+      <button id="settings-btn" class="icon-btn" aria-label="Settings">⚙</button>
+    </div>
+  </header>
+
+  <main id="app">
+    <p id="status" class="muted" role="status"></p>
+
+    <!-- First-run / settings -->
+    <section id="setup" class="card" hidden>
+      <h2>Set up</h2>
+      <p>Enter the ID of the gist that the GitHub Action writes <code>weather.json</code> to.
+         It's saved on this device only.</p>
+      <form id="setup-form">
+        <label>Gist ID
+          <input id="gist-id" name="gistId" required autocomplete="off" spellcheck="false" placeholder="e.g. 3f9c1a…">
+        </label>
+        <label>GitHub token <span class="muted">(optional, only needed if you hit rate limits)</span>
+          <input id="gh-token" name="token" type="password" autocomplete="off" spellcheck="false">
+        </label>
+        <div class="row">
+          <button type="submit" class="btn">Save</button>
+          <button type="button" id="setup-cancel" class="btn btn-ghost">Cancel</button>
+          <button type="button" id="setup-clear" class="btn btn-ghost">Forget</button>
+        </div>
+      </form>
+    </section>
+
+    <section id="warnings"></section>
+
+    <section id="hero" class="card hero" hidden>
+      <div class="hero-main">
+        <span id="hero-icon" class="hero-icon" aria-hidden="true"></span>
+        <div>
+          <div class="hero-range"><span id="hero-max"></span><span id="hero-min" class="muted"></span></div>
+          <div id="hero-summary" class="muted"></div>
+        </div>
+      </div>
+      <div id="now" class="now"></div>
+      <div class="sun">
+        <div><span aria-hidden="true">🌅</span> <span class="muted">Sunrise</span> <strong id="sunrise"></strong></div>
+        <div><span aria-hidden="true">🌇</span> <span class="muted">Sunset</span> <strong id="sunset"></strong></div>
+      </div>
+    </section>
+
+    <section id="forecast" class="card" hidden>
+      <h2>Today's forecast</h2>
+      <div id="forecast-text"></div>
+      <dl id="details" class="details"></dl>
+    </section>
+
+    <section id="days" class="card" hidden>
+      <h2>Next few days</h2>
+      <ul id="days-list" class="days"></ul>
+    </section>
+
+    <p id="meta" class="muted meta"></p>
+  </main>
+</body>
+</html>

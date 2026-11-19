@@ -1,0 +1,29 @@
+name: Scrape weather.gov.im
+
+on:
+  schedule:
+    # Every 30 minutes (GitHub may delay scheduled runs by a few minutes).
+    - cron: "7,37 * * * *"
+  workflow_dispatch:
+
+concurrency:
+  group: scrape
+  cancel-in-progress: true
+
+permissions:
+  contents: read
+
+jobs:
+  scrape:
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - uses: actions/checkout@v4
+      - name: Scrape and update gist
+        shell: pwsh
+        env:
+          GIST_ID: ${{ secrets.GIST_ID }}
+          GIST_TOKEN: ${{ secrets.GIST_TOKEN }}
+        run: |
+          if (-not $env:GIST_ID -or -not $env:GIST_TOKEN) { throw 'Set the GIST_ID and GIST_TOKEN repository secrets.' }
+          ./scripts/scrape.ps1
