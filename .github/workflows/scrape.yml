@@ -2,7 +2,7 @@ name: Scrape weather.gov.im
 
 on:
   schedule:
-    # Every 30 minutes (GitHub may delay scheduled runs by a few minutes).
+    # Every 30 minutes (GitHub may delay scheduled runs by a few minutes). update
     - cron: "7,37 * * * *"
   workflow_dispatch:
 
