@@ -4,6 +4,24 @@ A small PWA showing today's Isle of Man weather from the Ronaldsway Met Office
 (weather.gov.im): today's forecast, when it was issued, sunrise and sunset, current
 conditions at the airport, and any weather warnings.
 
+On top of the Met Office data, the app adds:
+
+- **Sun:** a live countdown to sunrise or sunset, a sun-position arc, golden hour,
+  when it gets dark, and how much day length changes tomorrow.
+- **Moon:** the current phase (drawn to match), percentage lit, moonrise and
+  moonset, and the next full and new moon. Calculated on the device in
+  `docs/astro.js`.
+- **Aurora:** live status from AuroraWatch UK, plus NOAA's Kp forecast for the
+  next 24 hours. The phone fetches both directly, since they allow browser
+  requests.
+- **Sky calendar:** meteor shower peaks (with how bright the moon will be),
+  full moons and supermoons, new moons, equinoxes, solstices, clock changes
+  and eclipses. One-off events like eclipses are listed in `SPECIAL` in
+  `astro.js`.
+- **Sky background:** shifts between night, dawn, day and dusk using the real
+  sun position, dims for overcast days, and glows green at night when an
+  aurora is possible.
+
 ## How it works
 
 ```
