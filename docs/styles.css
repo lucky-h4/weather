@@ -158,6 +158,33 @@ a { color: var(--accent); }
 .details dt { color: var(--faint); }
 .details dd { margin: 0; }
 
+/* History */
+.h-chart-wrap { position: relative; margin: 8px 0 4px; }
+.h-chart { width: 100%; height: auto; display: block; overflow: visible; touch-action: pan-y; }
+.h-chart .grid { stroke: rgba(255, 255, 255, .14); stroke-width: 1; shape-rendering: crispEdges; }
+.h-chart .axis { fill: var(--faint); font-size: 10px; font-variant-numeric: tabular-nums; }
+.h-chart .line { fill: none; stroke: #8fd3ff; stroke-width: 2; stroke-linejoin: round; stroke-linecap: round; }
+.h-chart .area { fill: url(#hArea); stroke: none; }
+.h-chart .mark { fill: #8fd3ff; stroke: rgba(10, 20, 45, .85); stroke-width: 2; }
+.h-chart .lbl { fill: var(--text); font-size: 11px; font-weight: 600; font-variant-numeric: tabular-nums; }
+.h-chart .lbl-sub { fill: var(--faint); font-size: 9px; }
+.h-chart .cross { stroke: rgba(255, 255, 255, .5); stroke-width: 1; }
+.h-tip { position: absolute; top: 0; transform: translateX(-50%); pointer-events: none; white-space: nowrap;
+  font-size: .8rem; padding: 4px 10px; border-radius: 10px; background: rgba(10, 18, 40, .92); border: 1px solid var(--edge); }
+.h-tip strong { font-size: .95rem; margin-right: 6px; }
+.h-records { margin-top: 10px; }
+.h-records li { font-size: .8rem; }
+.h-days-title { margin-top: 14px; }
+.h-days, .h-table table { width: 100%; border-collapse: collapse; font-size: .88rem; font-variant-numeric: tabular-nums; }
+.h-days th, .h-table th { text-align: left; font-weight: 600; color: var(--faint); font-size: .72rem; text-transform: uppercase; letter-spacing: .08em; padding: 0 0 4px; }
+.h-days td, .h-table td { padding: 6px 0; border-top: 1px solid var(--edge); }
+.h-days td.fc { color: var(--faint); }
+.h-days .w-dot { display: inline-block; width: 8px; height: 8px; border-radius: 50%; margin-left: 6px; background: var(--yellow); vertical-align: 1px; }
+.h-days .w-dot.amber { background: var(--amber); } .h-days .w-dot.red { background: var(--red); }
+.h-table { margin-top: 10px; font-size: .85rem; }
+.h-table summary { cursor: pointer; color: var(--accent); }
+.h-table table { margin-top: 6px; }
+
 /* Sky calendar */
 .events { list-style: none; margin: 0; padding: 0; }
 .events li { display: grid; grid-template-columns: 2rem 1fr; gap: 4px 10px; padding: 10px 0; border-top: 1px solid var(--edge); }

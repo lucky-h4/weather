@@ -136,6 +136,28 @@
       <dl id="details" class="details"></dl>
     </section>
 
+    <!-- History (recorded by node1 every 5 minutes) -->
+    <section id="history" class="glass" hidden>
+      <div class="card-head"><h2>Last 24 hours</h2><span id="h-sub" class="faint"></span></div>
+      <div class="h-chart-wrap">
+        <svg id="h-chart" class="h-chart" viewBox="0 0 320 150" role="img" aria-labelledby="h-desc"><desc id="h-desc"></desc></svg>
+        <div id="h-tip" class="h-tip" hidden></div>
+      </div>
+      <p id="h-empty" class="faint small" hidden></p>
+      <ul id="h-records" class="chips h-records"></ul>
+      <div id="h-days-wrap" hidden>
+        <h2 class="h-days-title">Observed vs forecast</h2>
+        <table class="h-days">
+          <thead><tr><th>Day</th><th>Observed</th><th>Forecast</th></tr></thead>
+          <tbody id="h-days"></tbody>
+        </table>
+      </div>
+      <details class="h-table">
+        <summary>Hourly readings</summary>
+        <table><thead><tr><th>Time</th><th>Temp</th></tr></thead><tbody id="h-rows"></tbody></table>
+      </details>
+    </section>
+
     <!-- Sky calendar -->
     <section id="events" class="glass" hidden>
       <h2>Sky calendar</h2>

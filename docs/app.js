@@ -5,6 +5,7 @@
 const KEY_GIST = 'iomw.gistId';
 const KEY_TOKEN = 'iomw.token';
 const KEY_CACHE = 'iomw.lastData';
+const KEY_HISTORY = 'iomw.lastHistory';
 const STALE_MINUTES = 120;
 const AURORAWATCH_URL = 'https://aurorawatch-api.lancs.ac.uk/0.2/status/current-status.xml';
 const KP_URL = 'https://services.swpc.noaa.gov/products/noaa-planetary-k-index-forecast.json';
@@ -15,7 +16,7 @@ const store = {
   set(k, v) { try { v == null || v === '' ? localStorage.removeItem(k) : localStorage.setItem(k, v); } catch {} },
 };
 
-const state = { data: null, aurora: null, auroraAt: 0, dayKey: null };
+const state = { data: null, history: null, aurora: null, auroraAt: 0, dayKey: null };
 
 // ---------- Helpers ----------
 const ICONS = {
@@ -25,6 +26,7 @@ const ICONS = {
   'becoming-rain': '🌧️', 'light-rain': '🌧️', 'rain': '🌧️', 'heavy-rain': '🌧️', 'drizzle': '🌧️',
   'sleet': '🌨️', 'snow': '❄️', 'hail': '🌨️', 'fog': '🌫️', 'mist': '🌫️',
   'thunder': '⛈️', 'thunderstorm': '⛈️', 'clear-night': '🌙',
+  'clear-sky': '☀️', 'clear-sky-night': '🌙',
 };
 function iconFor(name = '', night = false) {
   const icon = dayIcon(name);
@@ -34,6 +36,7 @@ function iconFor(name = '', night = false) {
 function dayIcon(name) {
   const n = name.toLowerCase();
   if (ICONS[n]) return ICONS[n];
+  if (n.includes('night') && n.includes('clear')) return '🌙';
   if (n.includes('thunder')) return '⛈️';
   if (n.includes('snow')) return '❄️';
   if (n.includes('sleet') || n.includes('hail')) return '🌨️';
@@ -45,7 +48,7 @@ function dayIcon(name) {
   return '🌡️';
 }
 const prettyIcon = (name = '') => name.replace(/-/g, ' ').replace(/^\w/, (c) => c.toUpperCase());
-const isOvercast = (name = '') => /cloud|rain|drizzle|fog|mist|sleet|snow|thunder|shower/.test(name) && !/sunny/.test(name);
+const isOvercast = (name = '') => /cloud|rain|drizzle|fog|mist|sleet|snow|thunder|shower/.test(name) && !/sunny|clear/.test(name);
 
 const COMPASS = { north: 'N', south: 'S', east: 'E', west: 'W' };
 const compass = (dir = '') => dir.split('-').map((p) => COMPASS[p.toLowerCase()] || '').join('') || dir;
@@ -134,6 +137,7 @@ function render() {
   renderAurora();
   renderInsights(data, info, now);
   renderForecast(today);
+  renderHistory(state.history);
   renderEvents(now);
   renderDays(info);
   renderMeta(data);
@@ -300,6 +304,137 @@ function renderForecast(today) {
   $('forecast').hidden = false;
 }
 
+// ---------- History (from history.json, recorded on node1) ----------
+const SVG_NS = 'http://www.w3.org/2000/svg';
+function svg(tag, attrs = {}, text) {
+  const e = document.createElementNS(SVG_NS, tag);
+  for (const [k, v] of Object.entries(attrs)) e.setAttribute(k, v);
+  if (text != null) e.textContent = text;
+  return e;
+}
+const fmtT = (v) => `${Number.isInteger(v) ? v : v.toFixed(1)}°`;
+
+function renderHistory(h) {
+  const card = $('history');
+  if (!h || !h.hours) { card.hidden = true; return; }
+  card.hidden = false;
+  const now = Date.now(), from = now - 24 * 36e5;
+  const pts = h.hours.map((p) => ({ t: new Date(p.t).valueOf(), v: p.temp })).filter((p) => p.t >= from - 36e5 && p.v != null);
+  const since = h.since ? new Date(h.since) : null;
+  $('h-sub').textContent = since ? `tracking since ${fmtDay(since)}` : '';
+
+  const chart = $('h-chart'), tip = $('h-tip');
+  const enough = pts.length >= 3;
+  chart.style.display = enough ? '' : 'none';
+  $('h-empty').hidden = enough;
+  $('h-empty').textContent = 'Collecting readings – the chart fills in over the next few hours.';
+  chart.replaceChildren(svg('desc', { id: 'h-desc' }));
+  tip.hidden = true;
+
+  if (enough) {
+    // Layout: plot area inside a 320x150 viewBox.
+    const L = 26, R = 304, T = 16, B = 124;
+    const vs = pts.map((p) => p.v);
+    let lo = Math.floor(Math.min(...vs)) - 1, hi = Math.ceil(Math.max(...vs)) + 1;
+    const step = [1, 2, 5, 10].find((s) => (hi - lo) / s <= 4) || 10;
+    lo = Math.floor(lo / step) * step; hi = Math.ceil(hi / step) * step;
+    const x = (t) => L + ((t - from) / (now - from)) * (R - L);
+    const y = (v) => B - ((v - lo) / (hi - lo)) * (B - T);
+
+    const defs = svg('defs');
+    const grad = svg('linearGradient', { id: 'hArea', x1: 0, x2: 0, y1: 0, y2: 1 });
+    grad.append(svg('stop', { offset: 0, 'stop-color': '#8fd3ff', 'stop-opacity': '.28' }), svg('stop', { offset: 1, 'stop-color': '#8fd3ff', 'stop-opacity': '0' }));
+    defs.append(grad);
+    chart.append(defs);
+
+    for (let v = lo; v <= hi; v += step) {
+      chart.append(svg('line', { class: 'grid', x1: L, x2: R, y1: y(v), y2: y(v) }), svg('text', { class: 'axis', x: L - 5, y: y(v) + 3, 'text-anchor': 'end' }, `${v}°`));
+    }
+    // X labels every 6 hours on the local clock.
+    const tick = new Date(from); tick.setMinutes(0, 0, 0); tick.setHours(Math.ceil(tick.getHours() / 6) * 6);
+    for (let t = tick.valueOf(); t <= now; t += 6 * 36e5) {
+      chart.append(svg('text', { class: 'axis', x: x(t), y: B + 14, 'text-anchor': 'middle' }, fmtTime(new Date(t))));
+    }
+
+    // Line and soft area, broken where readings are more than 2 hours apart.
+    const vis = pts.filter((p) => p.t >= from);
+    let d = '', area = '', seg = [];
+    const flush = () => {
+      if (seg.length > 1) {
+        d += seg.map((p, i) => `${i ? 'L' : 'M'}${x(p.t).toFixed(1)} ${y(p.v).toFixed(1)}`).join('');
+        area += `M${x(seg[0].t).toFixed(1)} ${B}` + seg.map((p) => `L${x(p.t).toFixed(1)} ${y(p.v).toFixed(1)}`).join('') + `L${x(seg[seg.length - 1].t).toFixed(1)} ${B}Z`;
+      }
+      seg = [];
+    };
+    vis.forEach((p, i) => { if (i && p.t - vis[i - 1].t > 2 * 36e5) flush(); seg.push(p); });
+    flush();
+    chart.append(svg('path', { class: 'area', d: area }), svg('path', { class: 'line', d }));
+
+    // Direct labels: low, high and latest only.
+    const lowP = vis.reduce((a, b) => (b.v < a.v ? b : a)), highP = vis.reduce((a, b) => (b.v > a.v ? b : a)), last = vis[vis.length - 1];
+    const label = (p, text, above) => {
+      const px = Math.min(Math.max(x(p.t), L + 14), R - 14);
+      chart.append(svg('circle', { class: 'mark', cx: x(p.t), cy: y(p.v), r: 4 }),
+        svg('text', { class: 'lbl', x: px, y: y(p.v) + (above ? -9 : 17), 'text-anchor': 'middle' }, text));
+    };
+    if (highP !== last) label(highP, fmtT(highP.v), true);
+    if (lowP !== last && lowP !== highP) label(lowP, fmtT(lowP.v), false);
+    // Put the latest label on the side away from the incoming line.
+    const prev = vis[vis.length - 2];
+    label(last, fmtT(last.v), prev ? prev.v <= last.v : last.v < (lo + hi) / 2);
+    $('h-desc').textContent = `Temperature over the last 24 hours: low ${fmtT(lowP.v)}, high ${fmtT(highP.v)}, latest ${fmtT(last.v)}.`;
+
+    // Crosshair + tooltip, snapping to the nearest reading.
+    const cross = svg('line', { class: 'cross', y1: T - 6, y2: B, visibility: 'hidden' });
+    const dot = svg('circle', { class: 'mark', r: 5, visibility: 'hidden' });
+    const hit = svg('rect', { x: L, y: 0, width: R - L, height: B + 4, fill: 'transparent' });
+    chart.append(cross, dot, hit);
+    const move = (ev) => {
+      const box = chart.getBoundingClientRect();
+      const vx = ((ev.clientX - box.left) / box.width) * 320;
+      const p = vis.reduce((a, b) => (Math.abs(x(b.t) - vx) < Math.abs(x(a.t) - vx) ? b : a));
+      cross.setAttribute('x1', x(p.t)); cross.setAttribute('x2', x(p.t)); cross.setAttribute('visibility', 'visible');
+      dot.setAttribute('cx', x(p.t)); dot.setAttribute('cy', y(p.v)); dot.setAttribute('visibility', 'visible');
+      tip.replaceChildren(el('strong', { text: fmtT(p.v) }), fmtTime(new Date(p.t)));
+      tip.style.left = `${Math.min(Math.max((x(p.t) / 320) * 100, 14), 86)}%`;
+      tip.hidden = false;
+    };
+    const leave = () => { cross.setAttribute('visibility', 'hidden'); dot.setAttribute('visibility', 'hidden'); tip.hidden = true; };
+    hit.addEventListener('pointermove', move);
+    hit.addEventListener('pointerdown', move);
+    hit.addEventListener('pointerleave', leave);
+    hit.addEventListener('pointercancel', leave);
+  }
+
+  // Records since tracking started.
+  const r = h.records || {};
+  const when = (s) => { const d = new Date(s); return `${d.toLocaleDateString('en-GB', { day: 'numeric', month: 'short' })} ${fmtTime(d)}`; };
+  const recs = [];
+  if (r.coldest) recs.push(`🥶 Coldest ${fmtT(r.coldest.temp)} · ${when(r.coldest.at)}`);
+  if (r.warmest) recs.push(`🌡️ Warmest ${fmtT(r.warmest.temp)} · ${when(r.warmest.at)}`);
+  if (r.windiest) recs.push(`💨 Windiest ${Math.round(r.windiest.mph)} mph · ${when(r.windiest.at)}`);
+  if (r.warningsIssued) recs.push(`⚠️ ${r.warningsIssued} warning${r.warningsIssued === 1 ? '' : 's'} recorded`);
+  $('h-records').replaceChildren(...recs.map((t) => el('li', { text: t })));
+
+  // Observed vs forecast, newest first.
+  const days = (h.days || []).slice().reverse();
+  $('h-days').replaceChildren(...days.map((d) => {
+    const date = new Date(d.date + 'T12:00:00');
+    const isToday = d.date === localDateKey();
+    const dayCell = el('td', { text: isToday ? 'Today' : date.toLocaleDateString('en-GB', { weekday: 'short', day: 'numeric' }) });
+    for (const w of d.warnings || []) dayCell.append(el('span', { class: `w-dot ${w}`, title: `${w} warning` }));
+    return el('tr', {},
+      dayCell,
+      el('td', { text: `${fmtT(d.min)} – ${fmtT(d.max)}${isToday ? ' so far' : ''}` }),
+      el('td', { class: 'fc', text: d.forecastMax != null ? `${fmtT(d.forecastMin)} – ${fmtT(d.forecastMax)}` : '–' }));
+  }));
+  $('h-days-wrap').hidden = days.length === 0;
+
+  // Accessible table of the hourly readings (the chart's data).
+  $('h-rows').replaceChildren(...pts.slice().reverse().map((p) =>
+    el('tr', {}, el('td', { text: `${fmtDay(new Date(p.t))} ${fmtTime(new Date(p.t))}` }), el('td', { text: fmtT(p.v) }))));
+}
+
 function renderEvents(now) {
   const events = Astro.upcomingEvents(60, now).filter((e) => e.date >= new Date(now.valueOf() - 12 * 36e5)).slice(0, 6);
   $('events-list').replaceChildren(...events.map((e) => {
@@ -369,8 +504,8 @@ function tick() {
 // ---------- Data ----------
 async function fetchData() {
   if (location.hash === '#demo') {
-    const r = await fetch('sample-weather.json', { cache: 'no-store' });
-    return r.json();
+    const [w, h] = await Promise.all(['sample-weather.json', 'sample-history.json'].map((f) => fetch(f, { cache: 'no-store' }).then((r) => r.json())));
+    return { data: w, history: h };
   }
   const gistId = store.get(KEY_GIST);
   if (!gistId) throw Object.assign(new Error('Not set up'), { setup: true });
@@ -384,10 +519,14 @@ async function fetchData() {
   const gist = await r.json();
   const file = gist.files && gist.files['weather.json'];
   if (!file) throw new Error('weather.json not found in gist.');
-  const text = file.truncated ? await (await fetch(file.raw_url, { cache: 'no-store' })).text() : file.content;
-  const data = JSON.parse(text);
+  const read = async (f) => (f.truncated ? (await fetch(f.raw_url, { cache: 'no-store' })).text() : f.content);
+  const data = JSON.parse(await read(file));
   if (!data.days) throw new Error('Gist has no weather data yet – has the Action run?');
-  return data;
+  // history.json is written by node1; it's optional (the GitHub Action backup doesn't write it).
+  let history = null;
+  const hf = gist.files['history.json'];
+  if (hf) { try { history = JSON.parse(await read(hf)); } catch {} }
+  return { data, history };
 }
 
 async function loadAurora() {
@@ -423,8 +562,9 @@ async function load() {
   try {
     const [res] = await Promise.allSettled([fetchData(), loadAurora()]);
     if (res.status === 'rejected') throw res.reason;
-    state.data = res.value;
-    store.set(KEY_CACHE, JSON.stringify(res.value));
+    state.data = res.value.data;
+    store.set(KEY_CACHE, JSON.stringify(res.value.data));
+    if (res.value.history) { state.history = res.value.history; store.set(KEY_HISTORY, JSON.stringify(res.value.history)); }
     setStatus('');
   } catch (e) {
     if (e.setup) { showSetup(false); setStatus(''); }
@@ -460,7 +600,7 @@ function init() {
   });
   $('setup-cancel').addEventListener('click', () => { $('setup').hidden = true; });
   $('setup-clear').addEventListener('click', () => {
-    [KEY_GIST, KEY_TOKEN, KEY_CACHE].forEach((k) => store.set(k, null));
+    [KEY_GIST, KEY_TOKEN, KEY_CACHE, KEY_HISTORY].forEach((k) => store.set(k, null));
     location.reload();
   });
   $('settings-btn').addEventListener('click', () => showSetup(true));
@@ -468,7 +608,10 @@ function init() {
   document.addEventListener('visibilitychange', () => { if (!document.hidden) load(); });
 
   const cached = store.get(KEY_CACHE);
-  if (cached && location.hash !== '#demo') { try { state.data = JSON.parse(cached); render(); } catch {} }
+  if (cached && location.hash !== '#demo') {
+    try { state.history = JSON.parse(store.get(KEY_HISTORY) || 'null'); } catch {}
+    try { state.data = JSON.parse(cached); render(); } catch {}
+  }
   load();
   setInterval(tick, 1000);
 

@@ -1,105 +1,85 @@
 {
-  "fetchedAt": "2026-11-19T15:36:25Z",
-  "issuedOn": "2026-11-19T11:30:00",
-  "forecaster": "Nathan Teece",
+  "fetchedAt": "2026-11-20T18:07:27Z",
+  "issuedOn": "2026-11-20T17:15:00",
+  "forecaster": "Stephanie Clayton",
   "source": "https://weather.gov.im",
   "current": {
     "location": "Currently at Isle of Man Airport",
-    "temp": "9",
-    "conditions": "Broken clouds",
-    "wind": "20 mph Easterly"
+    "temp": "5",
+    "conditions": "Few clouds",
+    "wind": "6 mph Northerly"
   },
   "warnings": [
     {
       "level": "yellow",
-      "heading": "Yellow weather warning. Be aware: Ice",
-      "dates": "From 21:00 19th November 2026 to 11:00 20th November 2026",
+      "heading": "Yellow weather warning. Be aware: Frost and Ice",
+      "dates": "From 16:00 20th November 2026 to 09:00 21st November 2026",
       "details": [
-        "Adverse weather conditions are expected to affect the Island from 21:00 GMT on Thursday 19th November 2026 to 11:00 GMT on Friday 20th November 2026",
-        "Clear spells will develop later this evening and tonight as the north-easterly wind falls light to moderate, allowing road surface temperature to fall close to, or slightly below freezing in places, bringing a risk of ice forming on untreated surfaces which remain damp or wet from earlier rain."
+        "Adverse weather conditions are expected to affect the Island from 16:00 GMT on Friday 20th November 2026 to 09:00 GMT on Saturday 21st November 2026",
+        "Clear skies and light winds this evening will lead to temperatures quickly falling close to ZERO, or slightly below in some places, leading to a widespread frost, as well as a risk of ice on any damp/wet untreated surfaces."
       ],
-      "areas": "The area’s most at risk are higher ground above around 1000FT, as well as sheltered low-lying spots in central, western and southern parts of the island.",
-      "forecaster": "Kirsty Wilding",
-      "issued": "2026-11-19T14:30:00",
-      "from": "2026-11-19T21:00:00",
-      "to": "2026-11-20T11:00:00"
+      "areas": "All areas at risk, however low-lying sheltered spots, as well as areas over higher ground will be at higher risk.",
+      "forecaster": "Stephanie Clayton",
+      "issued": "2026-11-20T15:00:00",
+      "from": "2026-11-20T16:00:00",
+      "to": "2026-11-21T09:00:00"
     }
   ],
   "days": [
     {
-      "date": "2026-11-19",
-      "icon": "light-rain-showers",
-      "maxTemp": "9",
-      "minTemp": "4",
-      "windDirection": "east",
-      "windSpeed": "16",
-      "windComments": "East or northeast 15-20 but up to 20-25 in the north.",
-      "visibility": "Good, falling moderate in rain through the morning. Occasional hill fog patches until later.",
-      "rainfall": "1-5",
-      "rainComments": "",
-      "forecast": [
-        "Often cloudy with only the risk of isolated showers or very occasional rain this afternoon and evening. The risk of rain diminishes as clear skies develop early tonight. Moderate to fresh easterly winds, locally strong at first. Maximum temperatures of 9°C.",
-        "Comments: Strong wind at first."
-      ],
-      "warning": "yellow",
-      "sunrise": "07:53",
-      "sunset": "16:13"
-    },
-    {
       "date": "2026-11-20",
-      "icon": "sunny",
+      "icon": "clear-sky-night",
       "maxTemp": "8",
       "minTemp": "-1",
       "windDirection": "north-east",
-      "windSpeed": "10",
-      "windComments": "East or northeast 10-15, occasionally 20 in exposed spots overnight, then north 10 or less in the afternoon and variable later.",
+      "windSpeed": "6",
+      "windComments": "Variable 5-10.",
       "visibility": "Good.",
       "rainfall": "0",
       "rainComments": "",
       "forecast": [
-        "Clear skies and light to moderate northeast winds for the latter half of Thursday night, providing a chilly start to the day on Friday. Minimum temperatures of around 0°C in some spots, bringing a grass frost, and a risk of ice.",
-        "Dry and sunny during the daytime on Friday, with light to moderate northeast winds becoming light and variable as the day progresses. Maximum temperature 8°C.",
-        "Temperatures will fall quickly after sunset to around -1°C in central areas, bringing the risk of frost and ice.",
-        "Comments: Risk of ice and frost at first and again later."
+        "Clear spells this evening with a light and variable breeze, causing temperatures to fall close to 0°C for many parts of the island, but possibly down to -1°C for some places, leading to risk of frost and ice developing on any wet/damp untreated surfaces.",
+        "Remaining dry overnight as cloud cover increases along with the wind, allowing temperatures to recover later in the night.",
+        "Comments: Risk of frost and ice."
       ],
-      "warning": "",
+      "warning": "yellow",
       "sunrise": "07:55",
       "sunset": "16:12"
     },
     {
       "date": "2026-11-21",
-      "icon": "sunny-spells",
-      "maxTemp": "9",
+      "icon": "sunny-intervals",
+      "maxTemp": "10",
       "minTemp": "-1",
       "windDirection": "south-east",
-      "windSpeed": "20",
-      "windComments": "Variable 10 or less, settling southeast 15-20 by midday, then gradually increasing 25-35.",
+      "windSpeed": "18",
+      "windComments": "Variable 5-10 settling east or southeast 10-15 in the morning, then gradually increasing 20-30 later in the afternoon.",
       "visibility": "Good.",
       "rainfall": "0",
       "rainComments": "",
       "forecast": [
-        "Clear spells overnight into Saturday giving another chilly start to the day with frost in places and a risk of ice. Minimum temperature of -1°C in some spots.",
-        "Dry with sunny spells during the daytime on Saturday. Light easterly winds will gradually strengthen, becoming a strong southeasterly by the evening. Top temperature 8°C.",
-        "Comments: Frost and a risk of ice in places at first. Strong winds later."
+        "A cold start tomorrow with a risk of frost and ice in places.",
+        "A dry day ahead with sunny intervals, though getting breezier as the light or moderate southeasterly wind strengthens through the afternoon. Top temperature 10°C.",
+        "Comments: Risk of frost and ice at first. Strong winds developing."
       ],
-      "warning": "",
+      "warning": "yellow",
       "sunrise": "07:56",
       "sunset": "16:10"
     },
     {
       "date": "2026-11-22",
-      "icon": "white-cloud",
+      "icon": "sunny-intervals",
       "maxTemp": "9",
-      "minTemp": "6",
-      "windDirection": "south-east",
-      "windSpeed": "23",
-      "windComments": "Easterly 25-35, gradually easing southeast 15-20.",
-      "visibility": "Good. Hill fog increasing.",
+      "minTemp": "4",
+      "windDirection": "east",
+      "windSpeed": "30",
+      "windComments": "Easterly 20-30, occasionally gusting 35-45 in places, gradually easing 10-15 later in the evening.",
+      "visibility": "Good.",
       "rainfall": "0",
       "rainComments": "",
       "forecast": [
-        "Dry with variable cloud on Sunday, perhaps allowing some sunshine through at times. Strong easterly winds will gradually ease southeast, with temperatures up to 9°C.",
-        "Comments: Strong winds. Risk of coastal overtopping around high tide."
+        "Dry with sunny spells on Sunday, turning cloudier later in the day, with a strong easterly wind easing through the afternoon, becoming moderate in the evening. Top temperature 9°C.",
+        "Comments: Risk of coastal overtopping (AM). Strong winds."
       ],
       "warning": "",
       "sunrise": "07:58",
@@ -107,22 +87,41 @@
     },
     {
       "date": "2026-11-23",
-      "icon": "becoming-rain",
-      "maxTemp": "11",
+      "icon": "white-cloud",
+      "maxTemp": "10",
       "minTemp": "5",
       "windDirection": "south-east",
       "windSpeed": "25",
-      "windComments": "Southeast 15 soon increasing 20-25, then 25-30, occasionally 30-35 with gusts of 40-45 for the evening. Decreasing south or southwest 15-20 later.",
-      "visibility": "Good, falling moderate in any rain later.",
-      "rainfall": "2-6",
-      "rainComments": "",
+      "windComments": "Easterly 15-20, veering southeast and gradually freshening, becoming 30-35 in the evening, possible with gusts 40-45 later.",
+      "visibility": "Good, falling moderate in rain later.",
+      "rainfall": "0-5",
+      "rainComments": "Uncertainty with rainfall detail/timing.",
       "forecast": [
-        "Cloudy and dry during the morning, then with an area of rain arriving in the afternoon or evening. Moderate southeast winds increasing fresh to strong, easing later. Temperatures up to 11°C.",
-        "Comments: Strong wind soon."
+        "Generally cloudy on Monday with a band of rain arriving later in the evening or overnight. Moderate to fresh easterly winds, veering southeast and gradually freshening, possibly reaching gale force overnight. Top temperature 10°C.",
+        "Comments: Strong winds developing, with a risk of gale force."
       ],
       "warning": "",
       "sunrise": "08:00",
       "sunset": "16:08"
+    },
+    {
+      "date": "2026-11-24",
+      "icon": "heavy-rain",
+      "maxTemp": "10",
+      "minTemp": "6",
+      "windDirection": "south",
+      "windSpeed": "30",
+      "windComments": "Southeast 35-45, veering southwest 10-15 in the afternoon, then backing easterly later.",
+      "visibility": "Moderate or good, occasionally poor. Hill fog.",
+      "rainfall": "10-15",
+      "rainComments": "Uncertainty with rainfall detail.",
+      "forecast": [
+        "Occasional rain or showers on Tuesday, with a few sunny intervals in between. A strong southeast wind, possibly reaching gale force, then veering southwest and easing, backing easterly later. Top temperature 10°C.",
+        "Comments: Strong winds, with a risk of gale force. Heavy rain for a time."
+      ],
+      "warning": "",
+      "sunrise": "08:02",
+      "sunset": "16:07"
     }
   ]
 }

@@ -36,8 +36,27 @@ weather.gov.im has no CORS headers, so a browser can't fetch it directly. The
 Action does the scraping on GitHub's servers and writes the result to a gist.
 GitHub's API does allow CORS, so the PWA reads the gist from your phone.
 
-- The **gist token** only lives in a repository secret. It never goes in the code
-  or on your phone.
+- The **gist token** only lives in a repository secret and on the home server.
+  It never goes in the code or on your phone.
+
+### Home server (main scraper) and weather history
+
+A home Ubuntu server (node1) is the main scraper. The GitHub Action is now an
+hourly backup.
+
+- **Every 5 minutes** cron runs `~/weather-scrape.sh`. It pulls this repo, runs
+  `scrape.ps1` to a local file, then runs `scripts/history.py`. That script
+  records the reading in SQLite (`~/.local/share/iom-weather/history.db`) and
+  updates the gist's `weather.json` and `history.json` in a single request. If
+  the history step fails, the wrapper falls back to publishing the weather on
+  its own.
+- **Secrets** live in `~/.config/iom-weather/env` (chmod 600).
+- **The log** is `~/.local/state/iom-weather.log`, trimmed nightly.
+- **`history.json`** holds the last 48 hours of readings, 14 days of observed vs
+  forecast, and records (coldest, warmest, windiest). The app shows it as the
+  "Last 24 hours" card.
+- **`history.py`** uses only the Python standard library. Use `--dry-run` to
+  print the summary without touching the gist.
 - The **phone** only needs the gist ID. It's stored in `localStorage` on first
   launch. A secret gist can be read without a token, so the optional token field
   is only there in case you hit GitHub's limit of 60 unauthenticated requests
