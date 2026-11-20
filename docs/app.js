@@ -180,32 +180,91 @@ function renderSky(now, info) {
   document.querySelector('meta[name="theme-color"]').setAttribute('content', colors[phase]);
 }
 
+// Moonrise/moonset events from yesterday to two days ahead, cached per minute.
+let moonEvCache = { key: '', ev: [] };
+function moonEvents(now) {
+  const key = `${localDateKey(now)} ${now.getHours()}:${now.getMinutes()}`;
+  if (moonEvCache.key === key) return moonEvCache.ev;
+  const ev = [];
+  for (let off = -1; off <= 2; off++) {
+    const d = new Date(now); d.setDate(d.getDate() + off);
+    const t = Astro.moonTimes(d);
+    if (t.rise) ev.push({ type: 'rise', t: t.rise });
+    if (t.set) ev.push({ type: 'set', t: t.set });
+  }
+  ev.sort((a, b) => a.t - b.t);
+  moonEvCache = { key, ev };
+  return ev;
+}
+
+const arcPoint = (t) => ({ x: 160 - 140 * Math.cos(Math.PI * t), y: 112 - 96 * Math.sin(Math.PI * t) });
+function setArc(t) {
+  const p = arcPoint(t);
+  $('arc-done').setAttribute('d', t > 0 ? `M20 112 A140 96 0 0 1 ${p.x.toFixed(1)} ${p.y.toFixed(1)}` : '');
+  return p;
+}
+function setGrid(cells) {
+  $('time-grid').replaceChildren(...cells.map(([label, value]) =>
+    el('div', {}, el('span', { class: 'faint', text: label }), el('strong', { text: value }))));
+}
+
+/** The sky arc: the Sun by day; at night the Moon's path, or stars when the Moon is down. */
 function renderSun(now, info) {
   const { sunrise, sunset, nextSunrise, astro, astroTomorrow } = info;
-  let label, target, t;
-  if (now < sunrise) { label = 'Sunrise in'; target = sunrise; t = 0; }
-  else if (now < sunset) { label = 'Sunset in'; target = sunset; t = (now - sunrise) / (sunset - sunrise); }
-  else { label = 'Sunrise in'; target = nextSunrise; t = 1; }
-  $('cd-label').textContent = label;
-  $('cd-value').textContent = fmtDuration(target - now, true);
+  const card = $('sun-card');
+  card.hidden = false;
 
-  const x = 160 - 140 * Math.cos(Math.PI * t), y = 112 - 96 * Math.sin(Math.PI * t);
-  $('arc-done').setAttribute('d', t > 0 ? `M20 112 A140 96 0 0 1 ${x.toFixed(1)} ${y.toFixed(1)}` : '');
-  const sun = $('arc-sun');
-  sun.setAttribute('cx', x.toFixed(1)); sun.setAttribute('cy', y.toFixed(1));
-  sun.style.opacity = t <= 0 || t >= 1 ? '.35' : '1';
+  if (now >= sunrise && now < sunset) {
+    card.className = 'glass mode-sun';
+    $('sky-title').textContent = 'Sun';
+    $('cd-label').textContent = 'Sunset in';
+    $('cd-value').textContent = fmtDuration(sunset - now, true);
+    const p = setArc((now - sunrise) / (sunset - sunrise));
+    const sun = $('arc-sun');
+    sun.setAttribute('cx', p.x.toFixed(1)); sun.setAttribute('cy', p.y.toFixed(1));
+    setGrid([['Sunrise', fmtTime(sunrise)], ['Golden hour', fmtTime(astro.goldenStart)], ['Sunset', fmtTime(sunset)], ['Dark by', fmtTime(astro.dusk)]]);
+    const len = sunset - sunrise;
+    const delta = (astroTomorrow.sunset - astroTomorrow.sunrise) - (astro.sunset - astro.sunrise);
+    const dm = Math.round(Math.abs(delta) / 1000);
+    const deltaTxt = dm < 30 ? 'same tomorrow' : `${dm >= 60 ? Math.floor(dm / 60) + 'm ' : ''}${dm % 60}s ${delta < 0 ? 'shorter' : 'longer'} tomorrow`;
+    $('daylen').textContent = `${fmtDuration(len)} daylight · ${deltaTxt}`;
+    return;
+  }
 
-  $('t-sunrise').textContent = fmtTime(sunrise);
-  $('t-sunset').textContent = fmtTime(sunset);
-  $('t-golden').textContent = fmtTime(astro.goldenStart);
-  $('t-dusk').textContent = fmtTime(astro.dusk);
+  // Night: from sunset to the next sunrise.
+  const dawnSunrise = now < sunrise ? sunrise : nextSunrise;
+  const ev = moonEvents(now);
+  const last = ev.filter((e) => e.t <= now).pop();
+  const moon = Astro.moonIllumination(now);
+  const phase = Astro.phaseName(moon.phase);
+  const lit = `${Math.round(moon.fraction * 100)}%`;
 
-  const len = sunset - sunrise;
-  const delta = (astroTomorrow.sunset - astroTomorrow.sunrise) - (astro.sunset - astro.sunrise);
-  const dm = Math.round(Math.abs(delta) / 1000);
-  const deltaTxt = dm < 30 ? 'same tomorrow' : `${dm >= 60 ? Math.floor(dm / 60) + 'm ' : ''}${dm % 60}s ${delta < 0 ? 'shorter' : 'longer'} tomorrow`;
-  $('daylen').textContent = `${fmtDuration(len)} daylight · ${deltaTxt}`;
-  $('sun-card').hidden = false;
+  if (last && last.type === 'rise') {
+    // The Moon is up: track it from moonrise to moonset.
+    const set = (ev.find((e) => e.type === 'set' && e.t > now) || {}).t;
+    card.className = 'glass mode-moon';
+    $('sky-title').textContent = 'Moon';
+    $('cd-label').textContent = set ? 'Moonset in' : 'Sunrise in';
+    $('cd-value').textContent = fmtDuration((set || dawnSunrise) - now, true);
+    const t = set ? (now - last.t) / (set - last.t) : 0.5;
+    const p = setArc(Math.min(Math.max(t, 0), 1));
+    $('arc-moon-lit').setAttribute('d', moonPath(moon.fraction, moon.phase < 0.5));
+    $('arc-moon').setAttribute('transform', `translate(${(p.x - 11).toFixed(1)} ${(p.y - 11).toFixed(1)}) scale(.22)`);
+    setGrid([['Moonrise', fmtTime(last.t)], ['Moonset', set ? fmtTime(set) : '–'], ['Sunrise', fmtTime(dawnSunrise)], ['Lit', lit]]);
+    $('daylen').textContent = `${phase.name} · ${lit} lit`;
+  } else {
+    // No Moon: stars, counting down to sunrise.
+    const rise = (ev.find((e) => e.type === 'rise' && e.t > now) || {}).t;
+    const riseTonight = rise && rise < dawnSunrise;
+    card.className = 'glass mode-stars';
+    $('sky-title').textContent = 'Night sky';
+    $('cd-label').textContent = 'Sunrise in';
+    $('cd-value').textContent = fmtDuration(dawnSunrise - now, true);
+    setArc(0);
+    const dawn = now < sunrise ? astro.dawn : info.astroTomorrow.dawn;
+    setGrid([['Moonrise', riseTonight ? fmtTime(rise) : 'After dawn'], ['First light', fmtTime(dawn)], ['Sunrise', fmtTime(dawnSunrise)], ['Moon', lit]]);
+    $('daylen').textContent = riseTonight ? `Moon down until ${fmtTime(rise)}` : 'No moon tonight · dark skies';
+  }
 }
 
 function moonPath(fraction, waxing) {
@@ -223,11 +282,15 @@ function renderMoon(now) {
   $('moon-name').textContent = p.name;
   const up = Astro.moonAltitude(now) > 0;
   $('moon-illum').textContent = `${Math.round(m.fraction * 100)}% lit${up ? ' · up now' : ''}`;
-  const t = Astro.moonTimes(now);
-  const parts = [];
-  if (t.rise) parts.push(`Rises ${fmtTime(t.rise)}`);
-  if (t.set) parts.push(`Sets ${fmtTime(t.set)}`);
-  $('moon-times').textContent = parts.join(' · ') || 'No rise or set today';
+  // Next rise/set from now (not the calendar day), so it matches the sky arc.
+  const ev = moonEvents(now);
+  const last = ev.filter((e) => e.t <= now).pop();
+  const nextRise = ev.find((e) => e.type === 'rise' && e.t > now);
+  const nextSet = ev.find((e) => e.type === 'set' && e.t > now);
+  const when = (d) => (localDateKey(d) === localDateKey(now) ? fmtTime(d) : `${fmtTime(d)} tmrw`);
+  $('moon-times').textContent = last && last.type === 'rise'
+    ? `Up since ${fmtTime(last.t)}${nextSet ? ` · sets ${when(nextSet.t)}` : ''}`
+    : [nextRise && `Rises ${when(nextRise.t)}`, nextSet && `sets ${when(nextSet.t)}`].filter(Boolean).join(' · ') || 'No rise or set soon';
   const full = Astro.nextPhase(0.5, now), nm = Astro.nextPhase(0, now);
   const short = (d) => d.toLocaleDateString('en-GB', { weekday: 'short', day: 'numeric', month: 'short' });
   $('moon-next').textContent = [full && `Full ${short(full)}`, nm && `New ${short(nm)}`]
