@@ -44,7 +44,7 @@ GitHub's API does allow CORS, so the PWA reads the gist from your phone.
 A home Ubuntu server (node1) is the main scraper. The GitHub Action is now an
 hourly backup.
 
-- **Every 5 minutes** cron runs `~/weather-scrape.sh`. It pulls this repo, runs
+- **Every 15 minutes** cron runs `~/weather-scrape.sh`. It pulls this repo, runs
   `scrape.ps1` to a local file, then runs `scripts/history.py`. That script
   records the reading in SQLite (`~/.local/share/iom-weather/history.db`) and
   updates the gist's `weather.json` and `history.json` in a single request. If
@@ -58,9 +58,10 @@ hourly backup.
 - **`history.py`** uses only the Python standard library. Use `--dry-run` to
   print the summary without touching the gist.
 - The **phone** only needs the gist ID. It's stored in `localStorage` on first
-  launch. A secret gist can be read without a token, so the optional token field
-  is only there in case you hit GitHub's limit of 60 unauthenticated requests
-  per hour.
+  launch. The app reads the files from `gist.githubusercontent.com/raw/<id>/…`,
+  which has no rate limit and is cached by GitHub for up to 5 minutes. The API,
+  by contrast, allows 60 requests an hour, shared by everything on your
+  connection. The optional token field switches back to the API.
 
 ## Setup
 

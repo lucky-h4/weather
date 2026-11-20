@@ -509,9 +509,11 @@ async function fetchData() {
   }
   const gistId = store.get(KEY_GIST);
   if (!gistId) throw Object.assign(new Error('Not set up'), { setup: true });
-  const headers = { Accept: 'application/vnd.github+json' };
   const token = store.get(KEY_TOKEN);
-  if (token) headers.Authorization = `Bearer ${token}`;
+  if (!token) return fetchRaw(gistId);
+
+  // With a token: use the API (5,000 requests/hour per token).
+  const headers = { Accept: 'application/vnd.github+json', Authorization: `Bearer ${token}` };
   const r = await fetch(`https://api.github.com/gists/${encodeURIComponent(gistId)}`, { headers, cache: 'no-store' });
   if (r.status === 404) throw new Error('Gist not found – check the ID in settings.');
   if (r.status === 403 || r.status === 429) throw new Error('GitHub rate limit hit – try again later or add a token.');
@@ -526,6 +528,24 @@ async function fetchData() {
   let history = null;
   const hf = gist.files['history.json'];
   if (hf) { try { history = JSON.parse(await read(hf)); } catch {} }
+  return { data, history };
+}
+
+// Without a token: read the files from gist.githubusercontent.com. Unlike the API
+// (60 requests/hour shared by everything on your connection) this has no rate limit.
+// GitHub caches it for up to 5 minutes, which is fine for data updated every 15.
+async function fetchRaw(gistId) {
+  const url = (file) => `https://gist.githubusercontent.com/raw/${encodeURIComponent(gistId)}/${file}`;
+  const [w, h] = await Promise.all([
+    fetch(url('weather.json'), { cache: 'no-store' }),
+    fetch(url('history.json'), { cache: 'no-store' }).catch(() => null),
+  ]);
+  if (w.status === 404) throw new Error('Gist not found – check the ID in settings.');
+  if (!w.ok) throw new Error(`GitHub returned ${w.status}`);
+  const data = await w.json();
+  if (!data.days) throw new Error('Gist has no weather data yet – has the scraper run?');
+  let history = null;
+  if (h && h.ok) { try { history = await h.json(); } catch {} }
   return { data, history };
 }
 
@@ -554,10 +574,11 @@ async function loadAurora() {
   state.aurora = a;
 }
 
-let loading = false;
+let loading = false, lastLoad = 0;
 async function load() {
   if (loading) return;
   loading = true;
+  lastLoad = Date.now();
   $('refresh').classList.add('spin');
   try {
     const [res] = await Promise.allSettled([fetchData(), loadAurora()]);
@@ -605,7 +626,10 @@ function init() {
   });
   $('settings-btn').addEventListener('click', () => showSetup(true));
   $('refresh').addEventListener('click', () => { state.auroraAt = 0; load(); });
-  document.addEventListener('visibilitychange', () => { if (!document.hidden) load(); });
+  // Refresh when you come back to the app, but not more than once every 2 minutes.
+  document.addEventListener('visibilitychange', () => {
+    if (!document.hidden && Date.now() - lastLoad > 2 * 6e4) load();
+  });
 
   const cached = store.get(KEY_CACHE);
   if (cached && location.hash !== '#demo') {
